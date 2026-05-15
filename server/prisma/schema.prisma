@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  avatar    String?
+  bio       String?
+  createdAt DateTime @default(now())
+
+  sentRequests      FriendRequest[]   @relation("sender")
+  receivedRequests  FriendRequest[]   @relation("receiver")
+  dailyPlans        DailyPlan[]
+  monthlyPlans      MonthlyPlan[]
+  phasePlans        PhasePlan[]
+  countdowns        Countdown[]
+  pomodoroSessions  PomodoroSession[]
+  expenses          Expense[]
+}
+
+model FriendRequest {
+  id         String   @id @default(uuid())
+  senderId   String
+  receiverId String
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("sender", fields: [senderId], references: [id])
+  receiver User @relation("receiver", fields: [receiverId], references: [id])
+}
+
+model DailyPlan {
+  id        String   @id @default(uuid())
+  userId    String
+  date      DateTime
+  title     String
+  completed Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model MonthlyPlan {
+  id        String   @id @default(uuid())
+  userId    String
+  month     Int
+  year      Int
+  title     String
+  completed Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model PhasePlan {
+  id          String    @id @default(uuid())
+  userId      String
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  progress    Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  tasks PhaseTask[]
+  user  User @relation(fields: [userId], references: [id])
+}
+
+model PhaseTask {
+  id        String   @id @default(uuid())
+  phaseId   String
+  title     String
+  completed Boolean  @default(false)
+  sortOrder Int      @default(0)
+
+  phase PhasePlan @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+}
+
+model Countdown {
+  id         String   @id @default(uuid())
+  userId     String
+  title      String
+  targetDate DateTime
+  type       String   @default("countdown")
+  color      String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model PomodoroSession {
+  id        String   @id @default(uuid())
+  userId    String
+  duration  Int
+  type      String
+  task      String?
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Expense {
+  id        String   @id @default(uuid())
+  userId    String
+  amount    Float
+  category  String
+  note      String?
+  date      DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
